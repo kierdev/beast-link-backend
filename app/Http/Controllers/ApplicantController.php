@@ -9,6 +9,11 @@ use Mail;
 
 class ApplicantController extends Controller
 {
+    public function test()
+    {
+        return response()->json(['message' => 'test'], 200);
+    }
+    
     // Get all applicants
     public function index()
     {

@@ -27,6 +27,8 @@ Route::get('admin/notifications', [NotificationController::class, 'viewAdminNoti
 Route::apiResource('applicants-status', ApplicantStatusController::class)->except(['store']); // CRUD operations for applicant status
 
 Route::apiResource('notifications', NotificationController::class)->only(['show', 'destroy']); // CRUD operations for notifications
+
+Route::get('test', [ApplicantController::class, 'test']); // Test route
 /**
  * -------------------------------------------------
 */ 
