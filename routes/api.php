@@ -7,3 +7,5 @@ use Illuminate\Support\Facades\Route;
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
+
+Route::get('/test', [TestController::class, 'index']); // This route will return a JSON response with a message "Hello, World!"
