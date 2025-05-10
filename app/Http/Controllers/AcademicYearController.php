@@ -24,7 +24,7 @@ class AcademicYearController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'academic_year_' => 'required|string',
+            'academic_year' => 'required|string',
             'academic_semester' => 'required|string',
         ]);
 
@@ -46,7 +46,7 @@ class AcademicYearController extends Controller
     public function update(Request $request, AcademicYear $academicYear)
     {
         $validated = $request->validate([
-            'academic_year_' => 'required|string',
+            'academic_year' => 'required|string',
             'academic_semester' => 'required|string',
         ]);
 

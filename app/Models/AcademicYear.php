@@ -10,7 +10,7 @@ class AcademicYear extends Model
     /** @use HasFactory<\Database\Factories\AcademicYearFactory> */
     use HasFactory;
     protected $fillable = [
-        'academic_year_',
+        'academic_year',
         'academic_semester',
     ];
 }

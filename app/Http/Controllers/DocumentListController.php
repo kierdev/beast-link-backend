@@ -25,6 +25,10 @@ class DocumentListController extends Controller
     {
         $validated = $request->validate([
             'document_name' => 'required|string|unique:document_lists,document_name',
+        ], [
+            'document_name.required' => 'The document name field is required.',
+            'document_name.string' => 'The document name must be a string.',
+            'document_name.unique' => 'The document name must be unique.',
         ]);
 
         $documentList = DocumentList::create($validated);
@@ -46,6 +50,10 @@ class DocumentListController extends Controller
     {
         $validated = $request->validate([
             'document_name' => 'required|string|unique:document_lists,document_name,' . $documentList->id,
+        ], [
+            'document_name.required' => 'The document name field is required.',
+            'document_name.string' => 'The document name must be a string.',
+            'document_name.unique' => 'The document name must be unique.',
         ]);
 
         $documentList->update($validated);
