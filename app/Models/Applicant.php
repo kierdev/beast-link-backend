@@ -11,6 +11,14 @@ class Applicant extends Model
 
     public $timestamps = false;
 
+    protected $fillable = [
+        'applicant_id',
+        'status',
+        'remarks',
+        'program_code',
+        'exam_id'
+    ];
+
     public function applications()
     {
         return $this->hasMany(Application::class, 'applicant_id', 'applicant_id');

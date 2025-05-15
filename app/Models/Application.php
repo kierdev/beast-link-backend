@@ -10,6 +10,16 @@ class Application extends Model
     protected $primaryKey = 'application_id';
     public $timestamps = false;
 
+    protected $fillable = [
+        'application_id',
+        'applicant_id',
+        'program_code',
+        'exam_id',
+        'application_date',
+        'status',
+    ];
+
+
     public function applicant()
     {
         return $this->belongsTo(Applicant::class, 'applicant_id');

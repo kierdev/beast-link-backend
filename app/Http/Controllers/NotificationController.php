@@ -7,25 +7,24 @@ use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     * 
-     */
-    public function index()
-    {
-        //
-    }
 
-    public function viewApplicantNotifications($applicantId) {
+    public function getAllApplicantNotifications($applicantId)
+    {
         // Fetch notifications for the specific applicant
-        $notifications = Notification::where('applicant_id', $applicantId)->where('for_admin', false)->get();
+        $notifications = Notification::where('applicant_id', $applicantId)
+            ->where('for_admin', false)
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         return response()->json($notifications);
     }
 
-    public function viewAdminNotifications() {
+    public function getAllAdminNotifications()
+    {
         // Fetch all notifications for admin
-        $notifications = Notification::where('for_admin', true)->get();
+        $notifications = Notification::where('for_admin', true)
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         return response()->json($notifications);
     }
@@ -35,8 +34,8 @@ class NotificationController extends Controller
      */
     public function show(string $id)
     {
-        // Find the notification by ID
-        $notification = Notification::findOrFail($id);
+        // Find the notification by notification_id
+        $notification = Notification::where('notification_id', $id)->firstOrFail();
 
         // Return the notification as a JSON response
         return response()->json($notification);
@@ -47,8 +46,8 @@ class NotificationController extends Controller
      */
     public function destroy(string $id)
     {
-        // Find the notification by ID
-        $notification = Notification::findOrFail($id);
+        // Find the notification by notification_id
+        $notification = Notification::where('notification_id', $id)->firstOrFail();
 
         // Delete the notification
         $notification->delete();
