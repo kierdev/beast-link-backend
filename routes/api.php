@@ -15,20 +15,29 @@ Route::get('/user', function (Request $request) {
  * -------------------------------------------------
  * |    Applicant Tracking and Status Update       |
  * -------------------------------------------------
-*/ 
-Route::get('applicants/filter', [ApplicantController::class, 'filter']); // Filter applicants by name, email, course1, course2, academic_year, status
+ */
+Route::get('applicants', [ApplicantStatusController::class, 'getAllApplicants']);
+Route::get('applicants/filter', [ApplicantStatusController::class, 'filterApplicants']);
+Route::get('applicants/{id}', [ApplicantStatusController::class, 'getApplicantById']);
 
-Route::apiResource('applicants', ApplicantController::class); // CRUD operations for applicants
+// Status Update Routes
+Route::patch('applicants/{id}/status/pending', [ApplicantStatusController::class, 'updateToPending']);
+Route::patch('applicants/{id}/status/documents-submitted', [ApplicantStatusController::class, 'updateToDocumentsSubmitted']);
+Route::patch('applicants/{id}/status/documents-verified', [ApplicantStatusController::class, 'updateToDocumentsVerified']);
+Route::patch('applicants/{id}/status/interview-scheduled', [ApplicantStatusController::class, 'updateToInterviewScheduled']);
+Route::patch('applicants/{id}/status/interview-completed', [ApplicantStatusController::class, 'updateToInterviewCompleted']);
+Route::patch('applicants/{id}/status/test-scheduled', [ApplicantStatusController::class, 'updateToTestScheduled']);
+Route::patch('applicants/{id}/status/test-completed', [ApplicantStatusController::class, 'updateToTestCompleted']);
+Route::patch('applicants/{id}/status/approved', [ApplicantStatusController::class, 'updateToApproved']);
+Route::patch('applicants/{id}/status/rejected', [ApplicantStatusController::class, 'updateToRejected']);
+Route::patch('applicants/{id}/status/waitlisted', [ApplicantStatusController::class, 'updateToWaitlisted']);
 
 Route::get('applicants/notifications/{applicantId}', [NotificationController::class, 'viewApplicantNotifications']); // Get owned  notifications for a specific applicant
 
 Route::get('admin/notifications', [NotificationController::class, 'viewAdminNotifications']); // Get all notifications for admin
 
-Route::apiResource('applicants-status', ApplicantStatusController::class)->except(['store']); // CRUD operations for applicant status
-
 Route::apiResource('notifications', NotificationController::class)->only(['show', 'destroy']); // CRUD operations for notifications
 
-Route::get('test', [ApplicantController::class, 'test']); // Test route
 /**
  * -------------------------------------------------
-*/ 
+ */
