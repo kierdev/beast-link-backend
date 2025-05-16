@@ -16,7 +16,9 @@ class Notification extends Model
         'applicant_id',
         'title',
         'message',
-        'for_admin'
+        'for_admin',
+        'is_read',
+        'read_at'
     ];
 
     protected $casts = [

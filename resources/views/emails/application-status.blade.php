@@ -44,10 +44,10 @@
             <p>We hope this email finds you well. We are reaching out to inform you that there has been an update to your admission application status at <span class="highlight">Beastlink University</span>.</p>
             <p>
                 <strong>Application ID:</strong> {{ $body['applicant_id'] }}<br>
-                <strong>Updated Status:</strong> {{ $body['status'] }}<br>
+                <strong>Updated Status:</strong> {{ ucwords(strtolower($body['status'])) }}<br>
                 <strong>Details:</strong> {{ $body['remarks'] }}
             </p>
-            <p>Please check your account for further details and complete any pending requirements.</p>
+            <p>Please check your account for further details.</p>
             <p>You can track your application progress by logging into your account:</p>
             <p>
                 🌟 <a href="https://beastlinkuniversity.com" class="link">https://beastlinkuniversity.com</a>
