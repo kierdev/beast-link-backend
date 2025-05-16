@@ -15,4 +15,9 @@ class Applicant extends Model
     {
         return $this->hasMany(Application::class, 'applicant_id', 'applicant_id');
     }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class, 'applicant_id', 'applicant_id');
+    }
 }
