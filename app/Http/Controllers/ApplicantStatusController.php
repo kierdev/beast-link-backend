@@ -24,23 +24,35 @@ class ApplicantStatusController extends Controller
 
         // Filter conditions
         if ($request->filled('name')) {
-            $query->where('Name', 'like', '%' . $request->Name . '%');
+            $searchTerm = '%' . $request->name . '%';
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('First_Name', 'like', $searchTerm)
+                    ->orWhere('Last_Name', 'like', $searchTerm);
+            });
+        } else {
+            if ($request->filled('first_name')) {
+                $query->where('First_Name', 'like', '%' . $request->first_name . '%');
+            }
+
+            if ($request->filled('last_name')) {
+                $query->where('Last_Name', 'like', '%' . $request->last_name . '%');
+            }
         }
 
         if ($request->filled('email')) {
-            $query->where('Email', 'like', '%' . $request->Email . '%');
+            $query->where('Email', 'like', '%' . $request->email . '%');
         }
 
         if ($request->filled('first_choice')) {
-            $query->where('First_Choice', $request->First_Choice);
+            $query->where('First_Choice', $request->first_choice);
         }
 
         if ($request->filled('second_choice')) {
-            $query->where('Second_Choice', $request->Second_Choice);
+            $query->where('Second_Choice', $request->second_choice);
         }
 
         if ($request->filled('academic_year')) {
-            $query->where('Academic_Year', $request->Academic_Year);
+            $query->where('Academic_Year', $request->academic_year);
         }
 
         if ($request->filled('status')) {

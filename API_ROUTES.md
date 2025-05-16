@@ -59,12 +59,12 @@
 ### General Notification Operations
 
 -   `GET /api/notifications/{notificationId}` - Get a specific notification by ID
-    -   Example: `GET /api/notifications/abc-123`
+    -   Example: `GET /api/notifications/123`
 -   `DELETE /api/notifications/{notificationId}` - Delete a specific notification
-    -   Example: `DELETE /api/notifications/abc-123`
+    -   Example: `DELETE /api/notifications/123`
 -   `GET /api/notifications/send` - Send status notifications
 -   `PUT /api/notifications/{notificationId}/read` - Mark a specific notification as read
-    -   Example: `PUT /api/notifications/abc-123/read`
+    -   Example: `PUT /api/notifications/123/read`
 
 ## Notes
 
