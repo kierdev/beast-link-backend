@@ -10,6 +10,10 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+Route::get('/user', function (Request $request) {
+    return $request->user();
+})->middleware('auth:sanctum');
+
 /**
  * -------------------------------------------------
  * |    Applicant Tracking and Status Update       |
@@ -48,9 +52,7 @@ Route::put('notifications/mark-all-admin-read', [ApplicantStatusController::clas
  */
 
 
-Route::get('/test', [TestController::class, 'index']);
-
-Route::get('/applicant/dashboard', [ApplicationController::class, 'index']);
+Route::get('/applicant/dashboard', [ApplicationController::class, 'applicantDashboard']);
 Route::get('/program/statistics', [ApplicationController::class, 'programStatistics']);
 Route::get('/interviewer/dashboard', [ApplicationController::class, 'interviewerDashboard']);
 Route::get('/admin/dashboard', [ApplicationController::class, 'adminDashboard']);

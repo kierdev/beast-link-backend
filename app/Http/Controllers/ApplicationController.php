@@ -14,32 +14,98 @@ use App\Models\Event;
 
 class ApplicationController extends Controller
 {
-    public function applicantDashboard(Request $request)
+
+
+
+    public function getAdminDashboardData()
     {
-        $applicantId = $request->query('applicant_id');
+        // Gather stats
+        $totalApplicants = Application::count();
+        $passedApplicants = Application::where('status', 'passed')->count();
+        $failedApplicants = Application::where('status', 'failed')->count();
+        $pendingApplicants = Application::where('status', 'pending')->count();
+        $totalCourses = Program::count();
 
-        if (!$applicantId) {
-            return response()->json(['error' => 'applicant_id is required'], 400);
-        }
-
-        $applications = Application::with('program')
-            ->where('applicant_id', $applicantId)
-            ->get();
-
-        $data = $applications->map(function ($application) {
+        // Mocked Chart Data
+        $barChartData = Program::limit(5)->get()->map(function ($program, $index) {
+            $colors = ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"];
             return [
-                'application_status' => $application->status,
-                'application_date' => $application->application_date,
-                'course_code' => $application->program->program_code,
-                'course_title' => $application->program->program_name,
-                'course_category' => $application->program->program_category,
-                'course_description' => $application->program->program_description,
+                'label' => $program->program_code,
+                'value' => Application::where('program_code', $program->program_code)->count(),
+                'color' => $colors[$index % count($colors)],
             ];
         });
 
-        return response()->json($data);
+        $lineChartData = collect(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'])->map(function ($month, $index) {
+            return [
+                'label' => $month,
+                'value' => rand(40, 100), // Replace with actual trend if available
+            ];
+        });
+
+        // Pie chart
+        $pieChartData = [
+            ['label' => 'Failed', 'value' => $failedApplicants, 'color' => '#FF0000'],
+            ['label' => 'Passed', 'value' => $passedApplicants, 'color' => '#00ff00'],
+            ['label' => 'Pending', 'value' => $pendingApplicants, 'color' => '#ffa500'],
+        ];
+
+        // Sample applicants list
+        $applicants = Applicant::limit(50)->get()->map(function ($applicant, $i) {
+            $statuses = ['Pending', 'Approved', 'Rejected'];
+            $courses = ['BSIT', 'BSCS', 'BSCE', 'BSA', 'BSSW'];
+            return [
+                'id' => 'APP-' . (1000 + $i),
+                'name' => $applicant->First_Name . ' ' . $applicant->Last_Name,
+                'email' => $applicant->applicant_email,
+                'course' => $courses[$i % count($courses)],
+                'status' => $statuses[$i % count($statuses)],
+                'appliedDate' => now()->subDays($i)->toDateString(),
+                'documents' => $i % 4 === 0 ? 'Incomplete' : 'Complete',
+            ];
+        });
+
+        // Courses
+        $courses = Program::get()->map(function ($program, $i) {
+            return [
+                'id' => $program->id,
+                'code' => $program->program_code,
+                'name' => $program->program_name,
+                'seats' => 100 + ($i * 10),
+                'enrolled' => rand(40, 100),
+            ];
+        });
+
+        // Notifications (placeholder)
+        $notifications = [
+            [
+                'id' => 1,
+                'type' => 'Application Update',
+                'message' => 'Your Computer Science application has been received.',
+                'time' => '10 minutes ago',
+                'read' => false,
+            ],
+        ];
+
+        return response()->json([
+            'stats' => [
+                'totalApplicants' => $totalApplicants,
+                'passedApplicants' => $passedApplicants,
+                'failedApplicants' => $failedApplicants,
+                'pendingApplicants' => $pendingApplicants,
+                'totalCourses' => $totalCourses,
+            ],
+            'charts' => [
+                'pieChartData' => $pieChartData,
+                'barChartData' => $barChartData,
+                'lineChartData' => $lineChartData,
+            ],
+            'applicants' => $applicants,
+            'courses' => $courses,
+            'notifications' => $notifications,
+        ]);
     }
-    public function programStatistics(Request $request)
+    public function getChairpersonDashboardData(Request $request)
     {
         $programCode = $request->query('program_code');
 
@@ -47,177 +113,243 @@ class ApplicationController extends Controller
             return response()->json(['error' => 'program_code is required'], 400);
         }
 
-        // Fetch statistics
+        // Basic counts
         $query = Application::where('program_code', $programCode);
+        $totalApplicants = $query->count();
+        $passedApplicants = $query->clone()->where('status', 'passed')->count();
+        $failedApplicants = $query->clone()->where('status', 'failed')->count();
+        $pendingApplicants = $query->clone()->where('status', 'pending')->count();
 
-        $statistics = [
-            'course_Failed_applicants'  => $query->clone()->where('status', 'failed')->count(),
-            'Course_Passed_applicants'  => $query->clone()->where('status', 'passed')->count(),
-            'Course_Pending_applicants' => $query->clone()->where('status', 'pending')->count(),
-            'Course_Total_applicants'   => $query->count(),
+        // Exam score distribution
+        $scoreDistribution = [
+            '90-100' => 0,
+            '80-89' => 0,
+            '70-79' => 0,
+            '60-69' => 0,
+            'Below 60' => 0,
         ];
 
-        // Applicant list with name, status, exam scores, and application date
-        $applicantList = Application::with(['applicant', 'exam'])
+        $scores = $query->clone()->pluck('exam_score');
+        foreach ($scores as $score) {
+            if ($score >= 90) $scoreDistribution['90-100']++;
+            elseif ($score >= 80) $scoreDistribution['80-89']++;
+            elseif ($score >= 70) $scoreDistribution['70-79']++;
+            elseif ($score >= 60) $scoreDistribution['60-69']++;
+            elseif ($score !== null) $scoreDistribution['Below 60']++;
+        }
+
+        $program = Program::where('program_code', $programCode)->first();
+        $departmentName = $program->program_name ?? 'N/A';
+
+        // Fake unread notification count (or fetch from DB if available)
+        $unreadNotifications = 3;
+
+        // Build programStatistics
+        $programStatistics = [
+            'totalApplicants' => $totalApplicants,
+            'passedApplicants' => $passedApplicants,
+            'failedApplicants' => $failedApplicants,
+            'pendingApplicants' => $pendingApplicants,
+            'department' => $departmentName,
+            'unreadNotifications' => $unreadNotifications,
+            'examScoreDistribution' => array_map(
+                fn($label, $value) => ['label' => $label, 'value' => $value],
+                array_keys($scoreDistribution),
+                array_values($scoreDistribution)
+            ),
+        ];
+
+        // Applicant list
+        $applicants = Application::with('applicant')
             ->where('program_code', $programCode)
             ->get()
-            ->map(function ($application) {
+            ->map(function ($application, $i) {
                 return [
-                    'name'           => $application->applicant->applicant_firstName . ' ' . $application->applicant->applicant_lastName,
-                    'status'         => $application->status,
-                    'exam_score'     => $application->exam_score ?? 'N/A',
-                    'application_date' => $application->application_date,
+                    'id' => 'APP-' . (1000 + $i),
+                    'name' => optional($application->applicant)->applicant_firstName . ' ' . optional($application->applicant)->applicant_lastName,
+                    'email' => optional($application->applicant)->applicant_email,
+                    'status' => ucfirst($application->status),
+                    'appliedDate' => $application->application_date,
+                    'documents' => $i % 4 === 0 ? 'Incomplete' : 'Complete',
                 ];
             });
 
-        // Exams list with title, date, time, location, and type
-        $examsList = Exam::where('program_code', $programCode)
+        // Exams list
+        $exams = Exam::where('program_code', $programCode)
             ->get()
-            ->map(function ($exam) {
+            ->map(function ($exam, $i) {
                 return [
-                    'title'         => $exam->exam_title,
-                    'date'          => $exam->exam_date,
-                    'time'          => $exam->exam_time,
-                    'location'      => $exam->exam_location,
-                    'type'          => $exam->exam_type ?? 'Entrance',
+                    'id' => 'EXM-' . str_pad($i + 1, 3, '0', STR_PAD_LEFT),
+                    'name' => $exam->exam_title,
+                    'date' => $exam->exam_date,
+                    'time' => $exam->exam_time,
+                    'location' => $exam->exam_location,
+                    'status' => $exam->exam_date < now()->toDateString() ? 'Completed' : 'Scheduled',
+                    'participants' => Application::where('exam_id', $exam->exam_id)->count(),
                 ];
             });
 
-        // Events list with title, date, and type
-        $eventsList = Event::all()->map(function ($event) {
-            return [
-                'title'         => $event->title,
-                'event_date'    => $event->event_date,
-                'event_type'    => $event->event_type,
-            ];
-        });
-
-        // Return all statistics and lists
         return response()->json([
-            'statistics' => $statistics,
-            'applicant_list' => $applicantList,
-            'exams_list' => $examsList,
-            'events_list' => $eventsList,
+            'programStatistics' => $programStatistics,
+            'applicants' => $applicants,
+            'exams' => $exams,
         ]);
     }
-    public function interviewerDashboard()
+
+
+    public function getInterviewerDashboardData()
     {
         $applications = Application::with(['exam', 'program', 'applicant'])->get();
 
-        $data = $applications->map(function ($application) {
+        $today = now()->toDateString();
+        $dashboardStats = [
+            'todaysInterviews' => 0,
+            'passedInterviews' => 0,
+            'failedInterviews' => 0,
+            'pendingRemarks'   => 0,
+        ];
+
+        $upcomingInterviews = [];
+        $pendingRemarks = [];
+        $completedInterviews = [];
+
+        foreach ($applications as $application) {
             $exam = $application->exam;
             $applicant = $application->applicant;
             $program = $application->program;
 
-            $name = $applicant?->applicant_firstName . ' ' . $applicant?->applicant_lastName;
+            if (!$exam || !$applicant || !$program) {
+                continue;
+            }
 
-            // Default structure
-            $pendingRemarks = [];
-            $completedInterviews = [];
+            $name = $applicant->applicant_firstName . ' ' . $applicant->applicant_lastName;
+            $date = \Carbon\Carbon::parse($exam->exam_date)->format('F d, Y');
+            $time = \Carbon\Carbon::parse($exam->exam_time)->format('g:i A');
+            $location = $exam->exam_location;
+            $programTitle = $program->program_name;
+            $status = $application->status;
 
-            if ($exam) {
-                $isFuture = $exam->exam_date >= now()->toDateString();
+            if ($exam->exam_date === $today) {
+                $dashboardStats['todaysInterviews']++;
+            }
 
-                if ($isFuture && $application->status === 'pending') {
+            if ($exam->exam_date > $today) {
+                $upcomingInterviews[] = [
+                    'id'       => $application->id,
+                    'name'     => $name,
+                    'date'     => $date,
+                    'time'     => $time,
+                    'program'  => $programTitle,
+                    'location' => $location,
+                    'status'   => 'scheduled',
+                ];
+            }
+
+            if ($exam->exam_date < $today) {
+                $interviewResult = $application->remarks ?? null;
+
+                if (!$interviewResult) {
                     $pendingRemarks[] = [
+                        'id'       => $application->id,
                         'name'     => $name,
-                        'status'   => $application->status,
-                        'date'     => $exam->exam_date,
-                        'time'     => $exam->exam_time,
-                        'location' => $exam->exam_location,
+                        'date'     => $date,
+                        'time'     => $time,
+                        'program'  => $programTitle,
+                        'location' => $location,
+                        'status'   => 'pending',
                     ];
-                }
+                    $dashboardStats['pendingRemarks']++;
+                } else {
+                    $result = strtolower($interviewResult);
+                    if ($result === 'passed') {
+                        $dashboardStats['passedInterviews']++;
+                    } elseif ($result === 'failed') {
+                        $dashboardStats['failedInterviews']++;
+                    }
 
-                if ($exam->exam_date < now()->toDateString()) {
                     $completedInterviews[] = [
+                        'id'       => $application->id,
                         'name'     => $name,
-                        'status'   => 'Completed',
-                        'date'     => $exam->exam_date,
-                        'time'     => $exam->exam_time,
-                        'location' => $exam->exam_location,
-                        'remarks'  => $application->remarks ?? 'No remarks provided',
+                        'date'     => $date,
+                        'time'     => $time,
+                        'program'  => $programTitle,
+                        'location' => $location,
+                        'status'   => 'completed',
+                        'result'   => $result,
                     ];
                 }
             }
-
-            return [
-                'exam_time'           => $exam?->exam_time,
-                'exam_title'          => $exam?->exam_title,
-                'exam_location'       => $exam?->exam_location,
-                'admission_date'      => $application->application_date,
-                'upcoming_interviews' => $exam && $exam->exam_date >= now()->toDateString() ? [[
-                    'name'           => $name,
-                    'date'           => $exam->exam_date,
-                    'time'           => $exam->exam_time,
-                    'program_title'  => $program?->program_name,
-                    'location'       => $exam->exam_location,
-                ]] : [],
-                'pending_remarks'     => $pendingRemarks,
-                'completed_interviews' => $completedInterviews,
-            ];
-        });
-
-        return response()->json($data);
-    }
-
-
-
-    public function adminDashboard()
-    {
-        // Total number of programs
-        $totalCourses = Program::count();
-
-        // Application status counts
-        $failedApplicants  = Application::where('status', 'failed')->count();
-        $passedApplicants  = Application::where('status', 'passed')->count();
-        $pendingApplicants = Application::where('status', 'pending')->count();
-        $totalApplicants   = Application::count();
-
-        // Applicant detailed info
-        $applicantInfo = Applicant::select('applicant_id', 'applicant_firstName', 'applicant_lastName', 'applicant_email')->get();
-
-        // Application trends (grouped by month)
-        $applicationTrends = Application::selectRaw("DATE_FORMAT(application_date, '%Y-%m') as month, COUNT(*) as total")
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
-
-        // Applicant List with additional data
-        $applicantList = Application::with(['applicant', 'program', 'exam'])
-            ->get()
-            ->map(function ($application) {
-                return [
-                    'name'             => $application->applicant->applicant_firstName . ' ' . $application->applicant->applicant_lastName,
-                    'course_name'      => $application->program->program_name,
-                    'status'           => $application->status,
-                    'exam_score'       => $application->exam_score ?? 'N/A',
-                    'application_date' => $application->application_date
-                ];
-            });
-
-        $coursesList = DB::table('tbl_program as p')
-            ->leftJoin('tbl_applications as a', 'p.program_code', '=', 'a.program_code')
-            ->select(
-                'p.program_code as code',
-                'p.program_name as title',
-                'p.program_category as category',
-                'p.program_description as specific_course',
-                DB::raw('MAX(a.application_date) as admission_date')
-            )
-            ->groupBy('p.program_code', 'p.program_name', 'p.program_category', 'p.program_description')
-            ->get();
-
+        }
 
         return response()->json([
-            'Total_course'          => $totalCourses,
-            'Failed_applicants'     => $failedApplicants,
-            'Passed_applicants'     => $passedApplicants,
-            'Pending_applicants'    => $pendingApplicants,
-            'Total_applicants'      => $totalApplicants,
-            'Application_trends'    => $applicationTrends,
-            'Applicant_information' => Applicant::select('applicant_id', 'applicant_firstName', 'applicant_lastName', 'applicant_email')->get(),
-            'Applicant_list'        => $applicantList,
-            'Courses_list'          => $coursesList,
+            'dashboardStats'      => $dashboardStats,
+            'upcomingInterviews'  => $upcomingInterviews,
+            'pendingRemarks'      => $pendingRemarks,
+            'completedInterviews' => $completedInterviews,
+        ]);
+    }
+
+    public function getApplicantDashboardData()
+    {
+        // Hardcoded data simulating what would typically come from DB or services
+        $courses = [
+            [
+                'id'          => 1,
+                'title'       => "Computer Science",
+                'count'       => "5,000+ Courses",
+                'description' => "Covers algorithms, programming, and problem-solving, essential for computing and software development.",
+                'college'     => "College of Technology",
+                'date'        => "Apr 25, 2025",
+                'category'    => "technology",
+            ],
+            [
+                'id'          => 2,
+                'title'       => "Special Education",
+                'count'       => "5,000+ Courses",
+                'description' => "Equips teachers with strategies to support students with disabilities and special needs, promoting inclusive and adaptive learning.",
+                'college'     => "College of Education",
+                'date'        => "Apr 25, 2025",
+                'category'    => "education",
+            ],
+            [
+                'id'          => 3,
+                'title'       => "Computer Engineering",
+                'count'       => "5,000+ Courses",
+                'description' => "Covers hardware, software, and embedded systems, essential for designing and optimizing computing technologies.",
+                'college'     => "College of Technology",
+                'date'        => "Apr 25, 2025",
+                'category'    => "technology",
+            ],
+        ];
+
+        $applications = [
+            [
+                'id'     => 1,
+                'name'   => "Computer Science",
+                'date'   => "2025-02-15",
+                'status' => "pending",
+            ],
+            [
+                'id'     => 2,
+                'name'   => "Human Resource Development Management",
+                'date'   => "2025-02-20",
+                'status' => "pending",
+            ],
+        ];
+
+        $progress = [
+            ['label' => "Application", 'status' => "completed"],
+            ['label' => "Document", 'status' => "current"],
+            ['label' => "Exam", 'status' => "upcoming"],
+            ['label' => "Interview", 'status' => "upcoming"],
+            ['label' => "Decision", 'status' => "upcoming"],
+            ['label' => "Enrollment", 'status' => "upcoming"],
+        ];
+
+        return response()->json([
+            'courses'      => $courses,
+            'applications' => $applications,
+            'progress'     => $progress,
         ]);
     }
 }
