@@ -10,7 +10,7 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 
-Route::get('/applicant/dashboard', [ApplicationController::class, 'applicantDashboard']);
-Route::get('/program/statistics', [ApplicationController::class, 'programStatistics']);
-Route::get('/interviewer/dashboard', [ApplicationController::class, 'interviewerDashboard']);
-Route::get('/admin/dashboard', [ApplicationController::class, 'adminDashboard']);
+Route::get('/applicant/dashboard', [ApplicationController::class, 'getApplicantDashboardData']);
+Route::get('/chairperson/dashboard', [ApplicationController::class, 'getChairpersonDashboardData']);
+Route::get('/interviewer/dashboard', [ApplicationController::class, 'getInterviewerDashboardData']);
+Route::get('/admin/dashboard', [ApplicationController::class, 'getAdminDashboardData']);
