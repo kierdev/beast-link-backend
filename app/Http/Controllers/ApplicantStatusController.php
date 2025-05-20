@@ -475,4 +475,9 @@ class ApplicantStatusController extends Controller
 
         return response()->json(['message' => $message], 200);
     }
+
+    public function markAllAdminNotificationsAsRead()
+    {
+        return $this->markAllNotificationsAsRead(null, true);
+    }
 }
