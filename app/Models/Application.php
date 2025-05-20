@@ -3,20 +3,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class AdmissionResult extends Model
+class Application extends Model
 {
-    protected $table = 'tbl_admission_results';
-    protected $primaryKey = 'result_id';
+    protected $table = 'tbl_applications';
+    protected $primaryKey = 'application_id';
+    public $timestamps = false;
 
     protected $fillable = [
         'applicant_id',
-        'program_id',
-        'admission_status',
-        'letter_status',
-        'letter_path',
-        'sent_at'
+        'program_code',
+        'exam_id',
+        'application_date',
+        'status',
+        'exam_score'
     ];
 
+    // back to the applicant
     public function applicant()
     {
         return $this->belongsTo(
@@ -26,12 +28,13 @@ class AdmissionResult extends Model
         );
     }
 
+    // link by program_code → tbl_program.program_code
     public function program()
     {
         return $this->belongsTo(
             Program::class,
-            'program_id',
-            'program_id'
+            'program_code',
+            'program_code'
         );
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Mail;
 
-use App\Models\Applicant;
+use App\Models\AdmissionResult;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -11,30 +11,41 @@ class AdmissionResultMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $applicant;
+    /** @var AdmissionResult */
+    public $admission;
 
-    public function __construct(Applicant $applicant)
+    public function __construct(AdmissionResult $admission)
     {
-        $this->applicant = $applicant;
+        $this->admission = $admission;
     }
 
     public function build(): self
-    {
-        $filePath = storage_path("app/public/{$this->applicant->letter_path}");
-        
-        if (!file_exists($filePath)) {
+{
+    // Grab the AdmissionResult, Applicant, and Program
+    $admission = $this->admission;                  // AdmissionResult
+    $applicant = $admission->applicant;             // Applicant
+    $program   = $admission->program;               // Program
 
-            throw new \Exception("PDF file does not exist: {$filePath}");
-        }
-
-        return $this->subject('Your Admission Result - Beastlink University')
-                    ->markdown('emails.admission_result')
-                    ->attach($filePath, [
-                        'as' => "letter_{$this->applicant->id}.pdf", 
-                        'mime' => 'application/pdf',
-                    ]);
+    $filePath = storage_path('app/public/' . $admission->letter_path);
+    if (! file_exists($filePath)) {
+        throw new \Exception("PDF not found at {$filePath}");
     }
+
+    return $this
+        ->subject('Your Admission Result – BeastLink University')
+        ->markdown('emails.admission_result', [
+            'admission' => $admission,
+            'applicant' => $applicant,
+            'program'   => $program,
+        ])
+        ->attach($filePath, [
+            'as'   => "Admission_Result_{$applicant->applicant_id}.pdf",
+            'mime' => 'application/pdf',
+        ]);
 }
+
+}
+
 
 // class AdmissionResultMail extends Mailable
 // {
