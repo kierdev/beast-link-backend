@@ -42,7 +42,7 @@ Route::put('notifications/{notificationId}/read', [ApplicantStatusController::cl
 Route::put('notifications/mark-all-read/{applicantId}', [ApplicantStatusController::class, 'markAllNotificationsAsRead']);
 
 // For admin notifications
-Route::put('notifications/mark-all-admin-read', [ApplicantStatusController::class, 'markAllNotificationsAsRead']);
+Route::put('notifications/mark-all-admin-read', [ApplicantStatusController::class, 'markAllAdminNotificationsAsRead']);
 /**
  * -------------------------------------------------
  */
