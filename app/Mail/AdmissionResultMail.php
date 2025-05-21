@@ -20,29 +20,31 @@ class AdmissionResultMail extends Mailable
     }
 
     public function build(): self
-{
-    // Grab the AdmissionResult, Applicant, and Program
-    $admission = $this->admission;                  // AdmissionResult
-    $applicant = $admission->applicant;             // Applicant
-    $program   = $admission->program;               // Program
+    {
+        // Grab the AdmissionResult, Applicant, and Program
+        $admission = $this->admission;                  // AdmissionResult
+        $applicant = $admission->applicant;             // Applicant
+        $program = $admission->program;         
+        $downloadUrl = asset('storage/' . $admission->letter_path);      // Program
+        $filePath = storage_path('app/public/' . $admission->letter_path);
+        
+        if (!file_exists($filePath)) {
+            throw new \Exception("PDF not found at {$filePath}");
+        }
 
-    $filePath = storage_path('app/public/' . $admission->letter_path);
-    if (! file_exists($filePath)) {
-        throw new \Exception("PDF not found at {$filePath}");
+        return $this
+            ->subject('Your Admission Result – BeastLink University')
+            ->markdown('emails.admission_result', [
+                'admission' => $admission,
+                'applicant' => $applicant,
+                'program' => $admission->program,
+                'downloadUrl' => $downloadUrl,  // <<< pass this in
+            ])
+            ->attach($filePath, [
+                'as' => "Admission_Result_{$applicant->applicant_id}.pdf",
+                'mime' => 'application/pdf',
+            ]);
     }
-
-    return $this
-        ->subject('Your Admission Result – BeastLink University')
-        ->markdown('emails.admission_result', [
-            'admission' => $admission,
-            'applicant' => $applicant,
-            'program'   => $program,
-        ])
-        ->attach($filePath, [
-            'as'   => "Admission_Result_{$applicant->applicant_id}.pdf",
-            'mime' => 'application/pdf',
-        ]);
-}
 
 }
 
