@@ -60,6 +60,10 @@ class ApplicantStatusController extends Controller
             $query->where('Academic_Year', $request->academic_year);
         }
 
+        if ($request->filled('college')) {
+            $query->where('College', 'like', '%' . $request->college . '%');
+        }
+
         if ($request->filled('status')) {
             $query->whereHas('applications', function ($q) use ($request) {
                 $q->where('status', $request->status);
