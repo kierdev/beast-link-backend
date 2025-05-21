@@ -37,7 +37,7 @@
 <body>
     <div class="container">
         <div class="header">
-        Collage Admission Application Status Update
+        College Admission Application Status Update
         </div>
         <div class="content">
             <p>Dear {{ $body['applicant_name'] }},</p>
