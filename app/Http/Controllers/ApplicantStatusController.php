@@ -185,21 +185,21 @@ class ApplicantStatusController extends Controller
     {
         // For applicant
         $applicant->notifications()->create([
-            'applicant_id' => $applicant->id,
+            'applicant_id' => $applicant->applicant_id,
             'title' => 'Application Status Update',
             'message' => "Your application status has been updated to {$status}. {$remarks}",
         ]);
 
         // For admin
         $applicant->notifications()->create([
-            'applicant_id' => $applicant->id,
+            'applicant_id' => $applicant->applicant_id,
             'title' => 'Application Status Updated',
             'message' => "The status of the application for {$applicant->First_Name} {$applicant->Last_Name} has been updated to {$status}.",
             'for_admin' => true,
         ]);
 
         Mail::to($applicant->Email)->send(new StatusMail([
-            'applicant_id' => $applicant->id,
+            'applicant_id' => $applicant->applicant_id,
             'applicant_name' => $applicant->First_Name . ' ' . $applicant->Last_Name,
             'status' => $status,
             'remarks' => $remarks,
