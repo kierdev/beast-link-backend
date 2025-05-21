@@ -4,8 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Mail\StatusMail;
 use App\Models\Applicant;
+use App\Models\Application;
+use App\Models\Exam;
+use App\Models\Program;
 use Illuminate\Http\Request;
 use App\Models\Notification;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Mail;
 
 class ApplicantStatusController extends Controller
@@ -479,5 +484,133 @@ class ApplicantStatusController extends Controller
     public function markAllAdminNotificationsAsRead()
     {
         return $this->markAllNotificationsAsRead(null, true);
+    }
+
+    /**
+     * Create a new applicant with their application and exam
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function create(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'last_name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
+            'name_extension' => 'nullable|string|max:10',
+            'gender' => 'nullable|string|max:20',
+            'religion' => 'nullable|string|max:100',
+            'citizenship' => 'nullable|string|max:100',
+            'civil_status' => 'nullable|string|max:20',
+            'place_of_birth' => 'nullable|string|max:255',
+            'age' => 'nullable|integer',
+            'address' => 'nullable|string',
+            'barangay' => 'nullable|string|max:100',
+            'city_municipality' => 'nullable|string|max:100',
+            'district' => 'nullable|string|max:100',
+            'zip_code' => 'nullable|string|max:20',
+            'mobile_number' => 'nullable|string|max:20',
+            'email' => 'required|email|unique:tbl_applicants,Email',
+            'guardian_name' => 'nullable|string|max:255',
+            'guardian_email' => 'nullable|email',
+            'shs_strand' => 'nullable|string|max:100',
+            'shs_school' => 'nullable|string|max:255',
+            'shs_address' => 'nullable|string',
+            'gwa_12' => 'nullable|numeric',
+            'gwa_11' => 'nullable|numeric',
+            'college' => 'required|string|max:255',
+            'first_choice' => 'required|string|max:50',
+            'second_choice' => 'required|string|max:50',
+            'academic_year' => 'required|string|max:20',
+            'exam_time' => 'required|date_format:H:i:s',
+            'exam_title' => 'required|string|max:255',
+            'exam_date' => 'required|date',
+            'exam_location' => 'required|string|max:255',
+            'exam_type' => 'required|string|max:50',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Get the next applicant_id
+            $nextApplicantId = Applicant::max('applicant_id') + 1;
+
+            // Create the applicant
+            $applicant = Applicant::create([
+                'applicant_id' => $nextApplicantId,
+                'Last_Name' => $request->last_name,
+                'First_Name' => $request->first_name,
+                'Middle_Name' => $request->middle_name,
+                'Name_Extension' => $request->name_extension,
+                'Gender' => $request->gender,
+                'Religion' => $request->religion,
+                'Citizenship' => $request->citizenship,
+                'Civil_Status' => $request->civil_status,
+                'Place_of_Birth' => $request->place_of_birth,
+                'Age' => $request->age,
+                'Address' => $request->address,
+                'Barangay' => $request->barangay,
+                'City_Municipality' => $request->city_municipality,
+                'District' => $request->district,
+                'Zip_Code' => $request->zip_code,
+                'Mobile_Number' => $request->mobile_number,
+                'Email' => $request->email,
+                'Guardian_Name' => $request->guardian_name,
+                'Guardian_Email' => $request->guardian_email,
+                'SHS_Strand' => $request->shs_strand,
+                'SHS_School' => $request->shs_school,
+                'SHS_Address' => $request->shs_address,
+                'GWA_12' => $request->gwa_12,
+                'GWA_11' => $request->gwa_11,
+                'College' => $request->college,
+                'First_Choice' => $request->first_choice,
+                'Second_Choice' => $request->second_choice,
+                'Academic_Year' => $request->academic_year,
+                'Timestamp' => now(),
+            ]);
+
+            // Create the exam
+            $exam = Exam::create([
+                'exam_id' => $nextApplicantId,
+                'exam_time' => $request->exam_time,
+                'exam_title' => $request->exam_title,
+                'exam_date' => $request->exam_date,
+                'program_code' => $request->first_choice, // Using first choice as program code
+                'exam_location' => $request->exam_location,
+                'exam_type' => $request->exam_type,
+            ]);
+
+            // Create the application
+            $application = Application::create([
+                'application_id' => $nextApplicantId,
+                'applicant_id' => $nextApplicantId,
+                'program_code' => $request->first_choice,
+                'exam_id' => $nextApplicantId,
+                'application_date' => now(),
+                'status' => 'pending',
+                'exam_score' => null,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Applicant, exam, and application created successfully',
+                'applicant' => $applicant,
+                'exam' => $exam,
+                'application' => $application
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Failed to create applicant',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

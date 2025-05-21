@@ -15,6 +15,8 @@ Route::get('/user', function (Request $request) {
  * |    Applicant Tracking and Status Update       |
  * -------------------------------------------------
  */
+Route::post('applicants', [ApplicantStatusController::class, 'create']);
+
 Route::get('applicants', [ApplicantStatusController::class, 'filterApplicants']);
 Route::get('applicants/{id}', [ApplicantStatusController::class, 'getApplicantById']);
 
